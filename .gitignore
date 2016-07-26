@@ -1,0 +1,44 @@
+# Standard ignores
+*.pyc
+*.pyo
+*.DS_Store
+*.swp
+*.idea
+*.project
+*.pydevproject
+*.kpf
+.ipynb_checkpoints
+venv
+my_env/
+cv/
+data/
+
+# Covers JetBrains IDEs: IntelliJ, RubyMine, PhpStorm, AppCode, PyCharm
+
+## Directory-based project format
+.idea/
+
+## File-based project format
+*.ipr
+*.iml
+*.iws
+
+data/model.*
+ningen_shikkaku*
+.envrc
+test.txt
+chainer-natual-language-processing.ipynb.org
+*.*~
+CoreNLP
+kytea
+stanford-corenlp-full-2013-06-20
+source_tmp.txt
+target_tmp.txt
+build
+machine_translation.ipynb.bk
+*.021
+EncoderDecoderModel_execute.py
+core_nlp_parse.pyx
+core_execute.py
+user.properties
+ChainerMachineTranslation*
