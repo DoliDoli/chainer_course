@@ -3,15 +3,13 @@ import time
 import math
 import sys
 import argparse
-import pickle as pickle
-import codecs
+import cPickle as pickle
 
 import numpy as np
 from chainer import cuda, Variable, FunctionSet
 import chainer.functions as F
 from CharRNN import CharRNN, make_initial_state
-
-sys.stdout = codecs.getwriter('utf_8')(sys.stdout)
+import codecs
 
 #%% arguments
 parser = argparse.ArgumentParser()
@@ -37,10 +35,10 @@ for c, i in vocab.items():
 
 # load model
 model = pickle.load(open(args.model, 'rb'))
-n_units = model.embed.W.data.shape[1]
+n_units = model.embed.W.shape[1]
 
 if args.gpu >= 0:
-    cuda.get_device(args.gpu).use()
+    cuda.init()
     model.to_gpu()
 
 # initialize generator
@@ -49,21 +47,23 @@ if args.gpu >= 0:
     for key, value in state.items():
         value.data = cuda.to_gpu(value.data)
 
-prev_char = np.array([0], dtype=np.int32)
+prev_char = np.array([0])
 if args.gpu >= 0:
     prev_char = cuda.to_gpu(prev_char)
+
+sys.stdout = codecs.getwriter('utf_8')(sys.stdout)
 
 if len(args.primetext) > 0:
     for i in unicode(args.primetext, 'utf-8'):
         sys.stdout.write(i)
-        prev_char = np.ones((1,), dtype=np.int32) * vocab[i]
+        prev_char = np.ones((1,)).astype(np.int32) * vocab[i]
         if args.gpu >= 0:
             prev_char = cuda.to_gpu(prev_char)
 
-        state, prob = model.forward_one_step(prev_char, prev_char, state, train=False)
+        state, prob = model.predict(prev_char, state)
 
 for i in xrange(args.length):
-    state, prob = model.forward_one_step(prev_char, prev_char, state, train=False)
+    state, prob = model.predict(prev_char, state)
 
     if args.sample > 0:
         probability = cuda.to_cpu(prob.data)[0].astype(np.float64)
@@ -73,7 +73,7 @@ for i in xrange(args.length):
         index = np.argmax(cuda.to_cpu(prob.data))
     sys.stdout.write(ivocab[index])
 
-    prev_char = np.array([index], dtype=np.int32)
+    prev_char = np.array([index])
     if args.gpu >= 0:
         prev_char = cuda.to_gpu(prev_char)
 
