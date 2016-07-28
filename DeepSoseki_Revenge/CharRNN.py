@@ -6,8 +6,13 @@ class CharRNN(FunctionSet):
 
     def __init__(self, n_vocab, n_units):
         super(CharRNN, self).__init__(
-            # EmbedID = 
+            # EmbedID = 単語のインデックスを元に埋め込みベクトルを作成するChainerの関数
+            # n_vocabは単語の種類数（文章の単語をリスト化したディクショナリ？）　n_unitsは埋め込みベクトルの次元数
             embed = F.EmbedID(n_vocab, n_units),
+            # ChainerでRNNを書くときはモデルはLinear関数で記述　、　伝播の際の関数としてｌｓｔｍを指定する
+            # Chainerの実装しているLSTMは通常の入力の他にinput gate, output gate, forget gateの3種類の入力があり、
+            # これを1個のベクトルとしてまとめているためにこのような実装が必要となっています。
+            # 最近は隠蔽されているverのlstmも使えるようになっている　
             l1_x = F.Linear(n_units, 4*n_units),
             l1_h = F.Linear(n_units, 4*n_units),
             l2_h = F.Linear(n_units, 4*n_units),
@@ -17,6 +22,7 @@ class CharRNN(FunctionSet):
         for param in self.parameters:
             param[:] = np.random.uniform(-0.08, 0.08, param.shape)
 
+    # 順伝播
     def forward_one_step(self, x_data, y_data, state, train=True, dropout_ratio=0.5):
         x = Variable(x_data.astype(np.int32), volatile=not train)
         t = Variable(y_data.astype(np.int32), volatile=not train)
@@ -26,6 +32,7 @@ class CharRNN(FunctionSet):
         c1, h1  = F.lstm(state['c1'], h1_in)
         h2_in   = self.l2_x(F.dropout(h1, ratio=dropout_ratio, train=train)) + self.l2_h(state['h2'])
         c2, h2  = F.lstm(state['c2'], h2_in)
+        #出力
         y       = self.l3(F.dropout(h2, ratio=dropout_ratio, train=train))
         state   = {'c1': c1, 'h1': h1, 'c2': c2, 'h2': h2}
 
