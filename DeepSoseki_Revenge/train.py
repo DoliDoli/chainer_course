@@ -24,14 +24,14 @@ def load_data(args):
     print ('%s/Soseki.txt'% args.data_dir)
     mt = MeCab.Tagger('-Ochasen')
     # unicode →　utf8
-    f_words = codecs.open('%s/Soseki.txt'% args.data_dir, 'r', encoding='utf-8', errors='replace')
-    
+    f_words = codecs.open('%s/Soseki.txt'% args.data_dir, 'r', encoding='utf-8', errors='ignore')
     # words = codecs.open('%s/Soseki.txt' % args.data_dir, 'r', 'utf-8').read()
     # words = list(words)
     # dataset = np.ndarray((len(words),), dtype=np.int32)
     words = []
     for line in f_words:
-        # utf-8をunicode化する必要     
+        # lineはバイト文字列型
+        mt.parse('')
         result = mt.parseToNode(line)
         while result:
             words.append(result.surface)
