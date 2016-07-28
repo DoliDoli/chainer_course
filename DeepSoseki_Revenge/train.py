@@ -4,7 +4,10 @@ import time
 import math
 import sys
 import argparse
-import cPickle as pickle
+try:
+   import cPickle as pickle
+except:
+   import pickle
 import copy
 import os
 import codecs
@@ -17,16 +20,16 @@ from CharRNN import CharRNN, make_initial_state
 # input data
 def load_data(args):
     vocab = {}
-    print ('%s/input.txt'% args.data_dir)
-    words = codecs.open('%s/input.txt' % args.data_dir, 'r', 'utf-8').read()
+    print ('%s/Soseki.txt'% args.data_dir)
+    words = codecs.open('%s/Soseki.txt' % args.data_dir, 'r', 'utf-8').read()
     words = list(words)
     dataset = np.ndarray((len(words),), dtype=np.int32)
     for i, word in enumerate(words):
         if word not in vocab:
             vocab[word] = len(vocab)
         dataset[i] = vocab[word]
-    print 'corpus length:', len(words)
-    print 'vocab size:', len(vocab)
+    print ('corpus length:', len(words))
+    print ('vocab size:', len(vocab))
     return dataset, words, vocab
 
 # arguments
@@ -68,9 +71,9 @@ if len(args.init_from) > 0:
 else:
     model = CharRNN(len(vocab), n_units)
 
-if args.gpu >= 0:
-    cuda.init()
-    model.to_gpu()
+# if args.gpu >= 0:
+    # cuda.init()
+    # model.to_gpu()
 
 optimizer = optimizers.RMSprop(lr=args.learning_rate, alpha=args.decay_rate, eps=1e-8)
 optimizer.setup(model.collect_parameters())
@@ -81,40 +84,40 @@ epoch        = 0
 start_at     = time.time()
 cur_at       = start_at
 state        = make_initial_state(n_units, batchsize=batchsize)
-if args.gpu >= 0:
-    accum_loss   = Variable(cuda.zeros(()))
-    for key, value in state.items():
-        value.data = cuda.to_gpu(value.data)
-else:
-    accum_loss   = Variable(np.zeros(()))
+# if args.gpu >= 0:
+#    accum_loss   = Variable(cuda.zeros(()))
+#    for key, value in state.items():
+#        value.data = cuda.to_gpu(value.data)
+# else:
+accum_loss   = Variable(np.zeros(()))
 
-print 'going to train {} iterations'.format(jump * n_epochs)
-for i in xrange(jump * n_epochs):
+print ('going to train {} iterations'.format(jump * n_epochs))
+for i in range(jump * n_epochs):
     x_batch = np.array([train_data[(jump * j + i) % whole_len]
-                        for j in xrange(batchsize)])
+                        for j in range(batchsize)])
     y_batch = np.array([train_data[(jump * j + i + 1) % whole_len]
-                        for j in xrange(batchsize)])
+                        for j in range(batchsize)])
 
-    if args.gpu >=0:
-        x_batch = cuda.to_gpu(x_batch)
-        y_batch = cuda.to_gpu(y_batch)
+    # if args.gpu >=0:
+    #     x_batch = cuda.to_gpu(x_batch)
+    #     y_batch = cuda.to_gpu(y_batch)
 
     state, loss_i = model.forward_one_step(x_batch, y_batch, state, dropout_ratio=args.dropout)
     accum_loss   += loss_i
 
     if (i + 1) % bprop_len == 0:  # Run truncated BPTT
         now = time.time()
-        print '{}/{}, train_loss = {}, time = {:.2f}'.format((i+1)/bprop_len, jump, accum_loss.data / bprop_len, now-cur_at)
+        print ('{}/{}, train_loss = {}, time = {:.2f}'.format((i+1)/bprop_len, jump, accum_loss.data / bprop_len, now-cur_at))
         loss_file.write('{}\n'.format(accum_loss.data / bprop_len))
         cur_at = now
 
         optimizer.zero_grads()
         accum_loss.backward()
         accum_loss.unchain_backward()  # truncate
-        if args.gpu >= 0:
-            accum_loss = Variable(cuda.zeros(()))
-        else:
-            accum_loss = Variable(np.zeros(()))
+        # if args.gpu >= 0:
+        #     accum_loss = Variable(cuda.zeros(()))
+        # else:
+        #     accum_loss = Variable(np.zeros(()))
 
         optimizer.clip_grads(grad_clip)
         optimizer.update()
@@ -129,7 +132,7 @@ for i in xrange(jump * n_epochs):
 
         if epoch >= args.learning_rate_decay_after:
             optimizer.lr *= args.learning_rate_decay
-            print 'decayed learning rate by a factor {} to {}'.format(args.learning_rate_decay, optimizer.lr)
+            print ('decayed learning rate by a factor {} to {}'.format(args.learning_rate_decay, optimizer.lr))
 
     sys.stdout.flush()
 
