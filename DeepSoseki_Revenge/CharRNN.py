@@ -6,6 +6,7 @@ class CharRNN(FunctionSet):
 
     def __init__(self, n_vocab, n_units):
         super(CharRNN, self).__init__(
+            # EmbedID = 
             embed = F.EmbedID(n_vocab, n_units),
             l1_x = F.Linear(n_units, 4*n_units),
             l1_h = F.Linear(n_units, 4*n_units),
