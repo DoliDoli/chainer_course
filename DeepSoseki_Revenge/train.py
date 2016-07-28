@@ -1,6 +1,7 @@
 # !/usr/bin/python
 # -*- coding: utf-8 -*-
 import time
+import MeCab
 import math
 import sys
 import argparse
