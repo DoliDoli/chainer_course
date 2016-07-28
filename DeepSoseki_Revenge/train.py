@@ -1,4 +1,4 @@
-#%%
+# !/usr/bin/python
 # -*- coding: utf-8 -*-
 import time
 import math
@@ -64,6 +64,7 @@ bprop_len   = args.seq_length
 grad_clip   = args.grad_clip
 
 train_data, words, vocab = load_data(args)
+train_data=np.array(train_data, dtype=np.int32)
 pickle.dump(vocab, open('%s/vocab.bin'%args.data_dir, 'wb'))
 
 if len(args.init_from) > 0:
@@ -89,10 +90,10 @@ state        = make_initial_state(n_units, batchsize=batchsize)
 #    for key, value in state.items():
 #        value.data = cuda.to_gpu(value.data)
 # else:
-accum_loss   = Variable(np.zeros(()))
+accum_loss = Variable(np.zeros(()).astype(np.float32)) #明示的にfloat32を指定s
 
 print ('going to train {} iterations'.format(jump * n_epochs))
-for i in range(jump * n_epochs):
+for i in range(int(jump) * int(n_epochs)):
     x_batch = np.array([train_data[(jump * j + i) % whole_len]
                         for j in range(batchsize)])
     y_batch = np.array([train_data[(jump * j + i + 1) % whole_len]
