@@ -21,9 +21,20 @@ from CharRNN import CharRNN, make_initial_state
 def load_data(args):
     vocab = {}
     print ('%s/Soseki.txt'% args.data_dir)
-    words = codecs.open('%s/Soseki.txt' % args.data_dir, 'r', 'utf-8').read()
-    words = list(words)
+    f_words = open('%s/input.txt' % args.data_dir, 'r')
+    mt = MeCab.Tagger('-Ochasen')
+
+    # words = codecs.open('%s/Soseki.txt' % args.data_dir, 'r', 'utf-8').read()
+    # words = list(words)
+    # dataset = np.ndarray((len(words),), dtype=np.int32)
+    words = []
+    for line in f_words:
+        result = mt.parseToNode(line)
+        while result:
+            words.append(unicode(result.surface, 'utf-8'))
+            result = result.next
     dataset = np.ndarray((len(words),), dtype=np.int32)
+    
     for i, word in enumerate(words):
         if word not in vocab:
             vocab[word] = len(vocab)
