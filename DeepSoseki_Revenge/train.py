@@ -120,6 +120,9 @@ for i in range(int(jump) * int(n_epochs)):
     state, loss_i = model.forward_one_step(x_batch, y_batch, state, dropout_ratio=args.dropout)
     accum_loss   += loss_i
 
+    # バックプロパゲーションでパラメータを更新する。
+    # truncateはどれだけ過去の履歴を見るかを表している。
+    # L2正規化をかけている。
     if (i + 1) % bprop_len == 0:  # Run truncated BPTT
         now = time.time()
         print ('{}/{}, train_loss = {}, time = {:.2f}'.format((i+1)/bprop_len, jump, accum_loss.data / bprop_len, now-cur_at))

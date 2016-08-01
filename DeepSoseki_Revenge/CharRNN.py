@@ -2,6 +2,8 @@ import numpy as np
 from chainer import Variable, FunctionSet
 import chainer.functions as F
 
+# 元々「文字」から「文字」の出現確率を予測するRNN これをカスタマイズ
+# 順伝播の書き方が古い
 class CharRNN(FunctionSet):
 
     def __init__(self, n_vocab, n_units):
@@ -21,24 +23,31 @@ class CharRNN(FunctionSet):
             l3   = F.Linear(n_units, n_vocab),
         )
         for param in self.parameters:
+            # 初期のパラメータを-0.1〜0.1の間で与えています。
             param[:] = np.random.uniform(-0.08, 0.08, param.shape)
 
     # 順伝播
+    # __call__と同じ
     def forward_one_step(self, x_data, y_data, state, train=True, dropout_ratio=0.5):
         x = Variable(x_data.astype(np.int32), volatile=not train)
         t = Variable(y_data.astype(np.int32), volatile=not train)
 
+        # 特徴ベクトルはBag of wordsの形式なので潜在ベクトル空間に圧縮する
         h0      = self.embed(x)
+        # 過学習をしないようにランダムに一部のデータを捨て、過去の状態のも考慮した第一の隠れ層を作成
         h1_in   = self.l1_x(F.dropout(h0, ratio=dropout_ratio, train=train)) + self.l1_h(state['h1'])
+        # LSTMに現在の状態と先ほど定義した隠れ層を付与して学習し、隠れ層と状態を出力
         c1, h1  = F.lstm(state['c1'], h1_in)
+        # 2層目も1層目と同様の処理を行う
         h2_in   = self.l2_x(F.dropout(h1, ratio=dropout_ratio, train=train)) + self.l2_h(state['h2'])
         c2, h2  = F.lstm(state['c2'], h2_in)
-        #出力
         y       = self.l3(F.dropout(h2, ratio=dropout_ratio, train=train))
+        # ラベルは3層目の処理で出力された値を使用する。
         state   = {'c1': c1, 'h1': h1, 'c2': c2, 'h2': h2}
 
         return state, F.softmax_cross_entropy(y, t)
 
+　　# 学習後作成されたモデルで、単語の予測をする機能
     def predict(self, x_data, state):
         x = Variable(x_data.astype(np.int32), volatile=True)
 
@@ -49,9 +58,10 @@ class CharRNN(FunctionSet):
         c2, h2  = F.lstm(state['c2'], h2_in)
         y       = self.l3(h2)
         state   = {'c1': c1, 'h1': h1, 'c2': c2, 'h2': h2}
-
+　　　　# 各単語の出力確率を予測するため、softmax関数を使用
         return state, F.softmax(y)
 
+# 状態の初期化：確率的勾配法に必要なデータを与え、学習データと認識させる
 def make_initial_state(n_units, batchsize=50, train=True):
     return {name: Variable(np.zeros((batchsize, n_units), dtype=np.float32),
             volatile=not train)
