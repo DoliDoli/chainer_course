@@ -8,6 +8,7 @@ class CharRNN(FunctionSet):
         super(CharRNN, self).__init__(
             # EmbedID = 単語のインデックスを元に埋め込みベクトルを作成するChainerの関数
             # n_vocabは単語の種類数（文章の単語をリスト化したディクショナリ？）　n_unitsは埋め込みベクトルの次元数
+            # ベクトルの次元ごとにsoftmaxで確率が出る　→　各単語が出現する確率として数字を扱うことができる
             embed = F.EmbedID(n_vocab, n_units),
             # ChainerでRNNを書くときはモデルはLinear関数で記述　、　伝播の際の関数としてｌｓｔｍを指定する
             # Chainerの実装しているLSTMは通常の入力の他にinput gate, output gate, forget gateの3種類の入力があり、
