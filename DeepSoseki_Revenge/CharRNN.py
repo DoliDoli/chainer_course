@@ -88,6 +88,7 @@ class RNNForLM(chainer.Chain):
         self.l2.reset_state()
 
     def __call__(self, x):
+        xを入力として、埋め込み層、LSTM層、LSTM層、全結合(出力)層の順に計算しています。
         h0 = self.embed(x)
         h1 = self.l1(F.dropout(h0, train=self.train))
         h2 = self.l2(F.dropout(h1, train=self.train))

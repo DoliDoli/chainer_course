@@ -75,6 +75,7 @@ n_epochs    = args.epochs
 n_units     = args.rnn_size
 batchsize   = args.batchsize
 bprop_len   = args.seq_length
+# この関数は勾配のL2normの大きさがgrad_clipよりも大きい場合、この大きさに縮める処理を行うようです。
 grad_clip   = args.grad_clip
 
 train_data, words, vocab = load_data(args)
@@ -107,6 +108,9 @@ state        = make_initial_state(n_units, batchsize=batchsize)
 accum_loss = Variable(np.zeros(()).astype(np.float32)) #明示的にfloat32を指定s
 
 print ('going to train {} iterations'.format(jump * n_epochs))
+
+
+# 学習のメインループ
 for i in range(int(jump) * int(n_epochs)):
     x_batch = np.array([train_data[(jump * j + i) % whole_len]
                         for j in range(batchsize)])
@@ -122,7 +126,6 @@ for i in range(int(jump) * int(n_epochs)):
 
     # バックプロパゲーションでパラメータを更新する。
     # truncateはどれだけ過去の履歴を見るかを表している。
-    # L2正規化をかけている。
     if (i + 1) % bprop_len == 0:  # Run truncated BPTT
         now = time.time()
         print ('{}/{}, train_loss = {}, time = {:.2f}'.format((i+1)/bprop_len, jump, accum_loss.data / bprop_len, now-cur_at))
@@ -137,6 +140,7 @@ for i in range(int(jump) * int(n_epochs)):
         # else:
         #     accum_loss = Variable(np.zeros(()))
 
+        # L2正規化をかけている。
         optimizer.clip_grads(grad_clip)
         optimizer.update()
 
