@@ -125,7 +125,7 @@ for i in range(int(jump) * int(n_epochs)):
     accum_loss   += loss_i
 
     # バックプロパゲーションでパラメータを更新する。
-    # truncateはどれだけ過去の履歴を見るかを表している。
+
     if (i + 1) % bprop_len == 0:  # Run truncated BPTT
         now = time.time()
         print ('{}/{}, train_loss = {}, time = {:.2f}'.format((i+1)/bprop_len, jump, accum_loss.data / bprop_len, now-cur_at))
@@ -133,6 +133,10 @@ for i in range(int(jump) * int(n_epochs)):
         cur_at = now
 
         optimizer.zero_grads()
+
+
+        # truncateはどれだけ過去の履歴を見るかを表している。　、BPTTの過去の時間を打ち切ってしまう方法
+        # backword()で逆誤差伝播したあとに、unchain_backward()を呼び出す事で過去のつながりをいったん切ることができるようです
         accum_loss.backward()
         accum_loss.unchain_backward()  # truncate
         # if args.gpu >= 0:
