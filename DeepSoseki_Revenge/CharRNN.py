@@ -9,18 +9,38 @@ class CharRNN(FunctionSet):
     def __init__(self, n_vocab, n_units):
         super(CharRNN, self).__init__(
             # EmbedID = 単語のインデックスを元に埋め込みベクトルを作成するChainerの関数
+            # 数字で与えたラベルをin_size次元の1-of-k法で表現したあと重みを掛けてn_units次元ベクトルとして出力します。
             # n_vocabは単語の種類数（文章の単語をリスト化したディクショナリ？）　n_unitsは埋め込みベクトルの次元数
             # ベクトルの次元ごとにsoftmaxで確率が出る　→　各単語が出現する確率として数字を扱うことができる
             embed = F.EmbedID(n_vocab, n_units),
             # ChainerでRNNを書くときはモデルはLinear関数で記述　、　伝播の際の関数としてｌｓｔｍを指定する
             # Chainerの実装しているLSTMは通常の入力の他にinput gate, output gate, forget gateの3種類の入力があり、
             # これを1個のベクトルとしてまとめているためにこのような実装が必要となっています。
-            # 最近は隠蔽されているverのlstmも使えるようになっている　
+            # 最近は隠蔽されているverのlstmも使えるようになっている →　下記に記載
             l1_x = F.Linear(n_units, 4*n_units),
             l1_h = F.Linear(n_units, 4*n_units),
             l2_h = F.Linear(n_units, 4*n_units),
             l2_x = F.Linear(n_units, 4*n_units),
             l3   = F.Linear(n_units, n_vocab),
+            """
+                class LSTM(chainer.Chain):
+                def __init__(self, in_size, n_units, train=True):
+                    super(LSTM, self).__init__(
+                        embed=L.EmbedID(in_size, n_units),
+                        l1=L.LSTM(n_units, n_units),
+                        l2=L.Linear(n_units, in_size),
+                    )
+
+                def __call__(self, x):
+                    h0 = self.embed(x)
+                    h1 = self.l1(h0)
+                    y = self.l2(h1)
+                    return y
+
+                def reset_state(self):
+                    self.l1.reset_state()
+            """
+
         )
         for param in self.parameters:
             # 初期のパラメータを-0.1〜0.1の間で与えています。
